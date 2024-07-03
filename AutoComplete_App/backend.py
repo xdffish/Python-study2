@@ -3,16 +3,16 @@ import json
 
 class AutoComplete:
     """
-    It works by building a `WordMap` that stores words to word-follower-count
+    它通过构建一个`WordMap`来工作，该`WordMap`存储单词到单词跟随者计数
     ----------------------------
-    e.g. To train the following statement:
+    例如，要训练以下语句：
     
     It is not enough to just know how tools work and what they worth,
     we have got to learn how to use them and to use them well.
     And with all these new weapons in your arsenal, we would better
     get those profits fired up
 
-    we create the following:
+    我们创建以下内容：
     {   It: {is:1}
         is: {not:1}
         not: {enough:1}
@@ -24,20 +24,18 @@ class AutoComplete:
         profits: {fired:1}
         fired: {up:1}
     }
-    so the word completion for "to" will be "use".
-    For optimization, we use another store `WordPrediction` to save the
-    predictions for each word
+    因此，“to”的单词补全将是“use”。
+    为了优化，我们使用另一个存储`WordPrediction`来保存每个单词的预测
     """
 
     def __init__(self):
         """
-        Returns - None
-        Input - None
+        返回 - None
+        输入 - None
         ----------
-        - Initialize database. we use sqlite3
-        - Check if the tables exist, if not create them
-        - maintain a class level access to the database
-          connection object
+        - 初始化数据库。我们使用sqlite3
+        - 检查表是否存在，如果不存在则创建它们
+        - 维护类级别访问数据库连接对象
         """
         self.conn = sqlite3.connect("autocompleteDB.sqlite3", autocommit=True)
         cur = self.conn.cursor()
@@ -52,16 +50,14 @@ class AutoComplete:
 
     def train(self, sentence):
         """
-        Returns - string
-        Input - str: a string of words called sentence
+        返回 - 字符串
+        输入 - str: 一个称为句子的单词字符串
         ----------
-        Trains the sentence. It does this by creating a map of
-        current words to next words and their counts for each
-        time the next word appears after the current word
-        - takes in the sentence and splits it into a list of words
-        - retrieves the word map and predictions map
-        - creates the word map and predictions map together
-        - saves word map and predictions map to the database
+        训练句子。它通过创建当前单词到下一个单词及其每次出现的计数的映射来实现
+        - 接受句子并将其拆分为单词列表
+        - 检索单词映射和预测映射
+        - 一起创建单词映射和预测映射
+        - 将单词映射和预测映射保存到数据库
         """
         cur = self.conn.cursor()
         words_list = sentence.split(" ")
@@ -81,7 +77,7 @@ class AutoComplete:
             else:
                 words_map[curr_word][next_word] += 1
 
-            # checking the completion word against the next word
+            # 检查补全单词与下一个单词
             if curr_word not in predictions:
                 predictions[curr_word] = {
                     'completion_word': next_word,
@@ -97,23 +93,21 @@ class AutoComplete:
 
         cur.execute("UPDATE WordMap SET value = (?) WHERE name='wordsmap'", (words_map,))
         cur.execute("UPDATE WordPrediction SET value = (?) WHERE name='predictions'", (predictions,))
-        return("training complete")
+        return("训练完成")
 
     def predict(self, word):
         """
-        Returns - string
-        Input - string
+        返回 - 字符串
+        输入 - 字符串
         ----------
-        Returns the completion word of the input word
-        - takes in a word
-        - retrieves the predictions map
-        - returns the completion word of the input word
+        返回输入单词的补全单词
+        - 接受一个单词
+        - 检索预测映射
+        - 返回输入单词的补全单词
         """
         cur = self.conn.cursor()
-        predictions = cur.execute("SELECT value FROM WordPrediction WHERE name='predictions'").fetchone()[0]
-        predictions = json.loads(predictions)
-        completion_word = predictions[word.lower()]['completion_word']
-        return completion_word
+        predictions = json.loads(cur.execute("SELECT value FROM WordPrediction WHERE name='predictions'").fetchone()[0])
+        return predictions.get(word.lower(), {}).get('completion_word', None)
 
 
 
