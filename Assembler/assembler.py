@@ -80,6 +80,8 @@ def scanner(string):
 
                         state = 1
                         token += "m"
+                        print("m")
+                        
 
                     case "e":  # catch register
 
